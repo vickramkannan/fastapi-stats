@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import time
 import uuid
 from fastapi.responses import JSONResponse
+import os
+from fastapi import Request
 
 EMAIL = "22f3000616@ds.study.iitm.ac.in"
 
@@ -80,3 +82,46 @@ async def verify(req: TokenRequest):
             status_code=401,
             content={"valid": False}
         )
+@app.get("/effective-config")
+async def effective_config(request: Request):
+    # 1. Defaults
+    config = {
+        "port": 8000,
+        "workers": 1,
+        "debug": False,
+        "log_level": "info",
+        "api_key": "default-secret-000",
+    }
+
+    # 2. config.development.yaml
+    config["port"] = 8732
+    config["log_level"] = "warning"
+
+    # 3. .env
+    config["workers"] = 6
+
+    # 4. OS environment variables (APP_*)
+    if os.getenv("APP_WORKERS"):
+        config["workers"] = int(os.getenv("APP_WORKERS"))
+
+    if os.getenv("APP_API_KEY"):
+        config["api_key"] = os.getenv("APP_API_KEY")
+
+    # 5. CLI overrides (?set=key=value)
+    for item in request.query_params.getlist("set"):
+        if "=" not in item:
+            continue
+
+        key, value = item.split("=", 1)
+
+        if key in ["port", "workers"]:
+            config[key] = int(value)
+        elif key == "debug":
+            config[key] = value.lower() in ["true", "1", "yes", "on"]
+        else:
+            config[key] = value
+
+    # Mask secret
+    config["api_key"] = "****"
+
+    return config
