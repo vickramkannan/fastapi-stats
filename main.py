@@ -5,6 +5,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import uuid
+from fastapi.responses import JSONResponse
 
 EMAIL = "22f3000616@ds.study.iitm.ac.in"
 
@@ -16,7 +17,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[ALLOWED_ORIGIN],
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -75,4 +76,7 @@ async def verify(req: TokenRequest):
         }
 
     except Exception:
-        raise HTTPException(status_code=401, detail={"valid": False})
+        return JSONResponse(
+            status_code=401,
+            content={"valid": False}
+        )
