@@ -1,2 +1,0 @@
-port: 8732
-log_level: warning
