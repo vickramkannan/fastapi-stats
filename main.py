@@ -22,6 +22,13 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+@app.middleware("http")
+async def add_headers(request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = str(uuid.uuid4())
+    response.headers["X-Process-Time"] = f"{time.perf_counter() - start:.6f}"
+    return response
 
 
 @app.get("/stats")
